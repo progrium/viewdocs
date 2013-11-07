@@ -115,7 +115,6 @@ func main() {
 			value, ok := lru.Get(key)
 			var output string
 			if !ok {
-				log.Println("CACHE MISS: ", key)
 				output, err = fetchAndRenderDoc(user, repo, doc)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -123,7 +122,7 @@ func main() {
 					return
 				}
 				lru.Set(key, &CacheValue{output})
-				log.Println(lru.StatsJSON())
+				log.Println("CACHE MISS:", key, lru.StatsJSON())
 			} else {
 				output = value.(*CacheValue).Value
 			}
