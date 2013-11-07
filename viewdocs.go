@@ -16,11 +16,7 @@ var port = flag.String("p", "8888", "Port to listen on")
 const template = `<!doctype html>
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>viewdocs.io</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <script src="//polyfill.io"></script>
-    <link href="//polyfill.io/normalize.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="//cloud.typography.com/678416/735422/css/fonts.css" />
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="http://static.gist.io/css/screen.css">
@@ -28,15 +24,11 @@ const template = `<!doctype html>
 <body>
     <section class="content">
         <header>
-            <h1 id="gistid"><a href="#">viewdocs</a></h1>
-            <!--h2 id="description" class="instapaper_title entry-title"></h2-->
+            <h1 id="gistid"><a href="http://github.com/{{USER}}/{{NAME}}">{{NAME}}</a></h1>
         </header>
         <div id="gistbody" class="instapaper_body entry-content">
             {{CONTENT}}
         </div>
-        <footer>
-            <p>Inspired by <a href="http://gist.io">gist.io</a> &middot; documentation for hackers &middot; zero setup &middot; publish in seconds</p>
-        </footer>
     </section>
 </body>
 </html>`
@@ -100,7 +92,10 @@ func main() {
 				errorResponse(w, err.Error())
 				return	
 			}
-			w.Write([]byte(strings.Replace(template, "{{CONTENT}}", string(body), 1)))
+			output := strings.Replace(template, "{{CONTENT}}", string(body), 1)
+			output = strings.Replace(output, "{{NAME}}", reponame, -1)
+			output = strings.Replace(output, "{{USER}}", username, -1)
+			w.Write([]byte(output))
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
