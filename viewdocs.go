@@ -1,18 +1,19 @@
 package main
 
 import (
-	"flag"
 	"encoding/json"
-	"fmt"
 	"bytes"
+	"errors"
 	"log"
 	"net/http"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"code.google.com/p/vitess/go/cache"
 )
 
-var port = flag.String("p", "8888", "Port to listen on")
+const cacheCapacity = 246*1024*1024 // 256MB
 const template = `<!doctype html>
 <head>
     <meta charset="utf-8">
@@ -33,73 +34,104 @@ const template = `<!doctype html>
 </body>
 </html>`
 
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage:	%v -p <port>\n\n", os.Args[0])
-		flag.PrintDefaults()
-	}
+type CacheValue struct {
+	Value string
 }
 
-func errorResponse(w http.ResponseWriter, e string) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(e))
+func (cv *CacheValue) Size() int {
+	return len(cv.Value)
+}
+
+func parseRequest(r *http.Request) (user, repo, doc string, err error) {
+	hostname := strings.Split(r.Host, ".")
+	if len(hostname) < 2 {
+		return "", "", "", errors.New("Bad hostname")
+	}
+	user = hostname[0]
+	path := strings.Split(r.RequestURI, "/")
+	repo = path[1]
+	if len(path) < 3 {
+		doc = "index"
+	} else {
+		doc = strings.Join(path[2:], "/")
+	}
+	return
+}
+
+func fetchAndRenderDoc(user, repo, doc string) (string, error) {
+	resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/master/docs/"+doc+".md")
+	if err != nil {
+		return "", err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
+	payload, err := json.Marshal(map[string]string{"text": string(body)})
+	if err != nil {
+		return "", err
+	}
+	resp, err = http.Post("https://api.github.com/markdown?access_token="+os.Getenv("ACCESS_TOKEN"), "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		return "", err
+	}
+	body, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
+	output := strings.Replace(template, "{{CONTENT}}", string(body), 1)
+	output = strings.Replace(output, "{{NAME}}", repo, -1)
+	output = strings.Replace(output, "{{USER}}", user, -1)
+	return output, nil	
 }
 
 func main() {
-	flag.Parse()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8888"
+	}
+
+	lru := cache.NewLRUCache(cacheCapacity)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		hostname := strings.Split(r.Host, ".")
-		if len(hostname) < 2 {
-			errorResponse(w, "Huh?")
-			return
-		}
-		username := hostname[0]
-		path := strings.Split(r.RequestURI, "/")
-		if len(path) < 3 && path[1] == "" {
+		if r.RequestURI == "/" {
 			http.Redirect(w, r, "http://progrium.viewdocs.io/viewdocs", 301)	
 			return
 		}
-		reponame := path[1]
-		var docpath string
-		if len(path) < 3 {
-			docpath = "index"
-		} else {
-			docpath = strings.Join(path[2:], "/")
+		if r.RequestURI == "/favicon.ico" {
+			return
 		}
 		switch r.Method {
 		case "GET":
-			resp, err := http.Get("https://raw.github.com/"+username+"/"+reponame+"/master/docs/"+docpath+".md")
+			user, repo, doc, err := parseRequest(r)
 			if err != nil {
-				errorResponse(w, err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
 				return
 			}
-			body, err := ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				errorResponse(w, err.Error())
-				return	
+			key := user + ":" + repo + ":" + doc
+			value, ok := lru.Get(key)
+			var output string
+			if !ok {
+				log.Println("CACHE MISS: ", key)
+				output, err = fetchAndRenderDoc(user, repo, doc)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
+					return
+				}
+				lru.Set(key, &CacheValue{output})
+				log.Println(lru.StatsJSON())
+			} else {
+				output = value.(*CacheValue).Value
 			}
-			payload, _ := json.Marshal(map[string]string{"text": string(body)})
-			resp, err = http.Post("https://api.github.com/markdown?access_token="+os.Getenv("ACCESS_TOKEN"), "application/json", bytes.NewBuffer(payload))
-			if err != nil {
-				errorResponse(w, err.Error())
-				return
-			}
-			body, err = ioutil.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				errorResponse(w, err.Error())
-				return	
-			}
-			output := strings.Replace(template, "{{CONTENT}}", string(body), 1)
-			output = strings.Replace(output, "{{NAME}}", reponame, -1)
-			output = strings.Replace(output, "{{USER}}", username, -1)
 			w.Write([]byte(output))
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
-	log.Println("Listening on port "+*port)
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	log.Println("Listening on port "+port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
