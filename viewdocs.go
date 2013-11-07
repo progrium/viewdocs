@@ -17,7 +17,7 @@ const cacheCapacity = 246*1024*1024 // 256MB
 const template = `<!doctype html>
 <head>
     <meta charset="utf-8">
-    <title>viewdocs.io</title>
+    <title>{{NAME}} :: viewdocs.io</title>
     <link rel="stylesheet" type="text/css" href="//cloud.typography.com/678416/735422/css/fonts.css" />
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="http://static.gist.io/css/screen.css">
@@ -25,7 +25,7 @@ const template = `<!doctype html>
 <body>
     <section class="content">
         <header>
-            <h1 id="gistid"><a href="http://github.com/{{USER}}/{{NAME}}">{{NAME}}</a></h1>
+            <h1 id="gistid"><a href="http://github.com/{{USER}}/{{NAME}}">{{NAME}}</a> :: <a href="/{{NAME}}">index</a></h1>
         </header>
         <div id="gistbody" class="instapaper_body entry-content">
             {{CONTENT}}
