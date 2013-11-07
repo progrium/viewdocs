@@ -56,8 +56,8 @@ func main() {
 		}
 		username := hostname[0]
 		path := strings.Split(r.RequestURI, "/")
-		if len(path) < 2 {
-			errorResponse(w, "Huh?")	
+		if len(path) < 3 && path[1] == "" {
+			http.Redirect(w, r, "http://progrium.viewdocs.io/viewdocs", 301)	
 			return
 		}
 		reponame := path[1]
