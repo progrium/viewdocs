@@ -13,7 +13,7 @@ import (
 	"code.google.com/p/vitess/go/cache"
 )
 
-const cacheCapacity = 246*1024*1024 // 256MB
+const cacheCapacity = 256*1024*1024 // 256MB
 const template = `<!doctype html>
 <head>
     <meta charset="utf-8">
