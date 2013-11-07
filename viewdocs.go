@@ -18,7 +18,6 @@ const template = `<!doctype html>
 <head>
     <meta charset="utf-8">
     <title>{{NAME}} :: viewdocs.io</title>
-    <link rel="stylesheet" type="text/css" href="//cloud.typography.com/678416/735422/css/fonts.css" />
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="http://static.gist.io/css/screen.css">
 </head>
