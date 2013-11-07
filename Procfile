@@ -1,1 +1,1 @@
-web: ./viewdocs -p $PORT
+web: viewdocs -p $PORT
