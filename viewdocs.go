@@ -81,7 +81,7 @@ func main() {
 				return	
 			}
 			payload, _ := json.Marshal(map[string]string{"text": string(body)})
-			resp, err = http.Post("https://api.github.com/markdown", "application/json", bytes.NewBuffer(payload))
+			resp, err = http.Post("https://api.github.com/markdown?access_token="+os.Getenv("ACCESS_TOKEN"), "application/json", bytes.NewBuffer(payload))
 			if err != nil {
 				errorResponse(w, err.Error())
 				return
