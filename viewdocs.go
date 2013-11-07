@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"bytes"
-	"errors"
 	"log"
 	"net/http"
 	"io/ioutil"
@@ -14,25 +13,8 @@ import (
 )
 
 const cacheCapacity = 256*1024*1024 // 256MB
-const template = `<!doctype html>
-<head>
-    <meta charset="utf-8">
-    <title>{{NAME}} :: viewdocs.io</title>
-    <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="http://static.gist.io/css/screen.css">
-</head>
-<body>
-    <section class="content">
-        <header>
-            <h1 id="gistid"><a href="http://github.com/{{USER}}/{{NAME}}">{{NAME}}</a> :: <a href="/{{NAME}}">index</a></h1>
-        </header>
-        <div id="gistbody" class="instapaper_body entry-content">
-            {{CONTENT}}
-        </div>
-    </section>
-    <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create', 'UA-6824126-17', 'viewdocs.io');ga('send', 'pageview');</script>
-</body>
-</html>`
+
+var defaultTemplate string
 
 type CacheValue struct {
 	Value string
@@ -44,9 +26,6 @@ func (cv *CacheValue) Size() int {
 
 func parseRequest(r *http.Request) (user, repo, doc string, err error) {
 	hostname := strings.Split(r.Host, ".")
-	if len(hostname) < 2 {
-		return "", "", "", errors.New("Bad hostname")
-	}
 	user = hostname[0]
 	path := strings.Split(r.RequestURI, "/")
 	repo = path[1]
@@ -59,14 +38,35 @@ func parseRequest(r *http.Request) (user, repo, doc string, err error) {
 }
 
 func fetchAndRenderDoc(user, repo, doc string) (string, error) {
+	template := make(chan string)
+	go func() {
+		resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/master/docs/template.html")
+		if err != nil || resp.StatusCode == 404 {
+			template <- defaultTemplate
+			return
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			template <- defaultTemplate
+			return
+		}
+		template <- string(body)
+	}()
 	resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/master/docs/"+doc+".md")
 	if err != nil {
 		return "", err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return "", err
+	var body []byte
+	if resp.StatusCode == 200 {
+		body, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		resp.Body.Close()
+		body = []byte("# Page not found")
 	}
 	payload, err := json.Marshal(map[string]string{"text": string(body)})
 	if err != nil {
@@ -81,7 +81,7 @@ func fetchAndRenderDoc(user, repo, doc string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	output := strings.Replace(template, "{{CONTENT}}", string(body), 1)
+	output := strings.Replace(<-template, "{{CONTENT}}", string(body), 1)
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
 	return output, nil	
@@ -94,6 +94,17 @@ func main() {
 	}
 
 	lru := cache.NewLRUCache(cacheCapacity)
+
+	resp, err := http.Get("https://raw.github.com/progrium/viewdocs/master/docs/template.html")
+	if err != nil || resp.StatusCode == 404 {
+		log.Fatal("Unable to fetch default template")
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defaultTemplate = string(body)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.RequestURI == "/" {
