@@ -133,6 +133,7 @@ func main() {
 				w.Write([]byte(err.Error()))
 				return
 			}
+			log.Printf("Building docs for '%s/%s'", user, repo)
 			key := user + ":" + repo + ":" + doc
 			value, ok := lru.Get(key)
 			var output string
