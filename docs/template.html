@@ -3,13 +3,13 @@
     <meta charset="utf-8">
     <title>{{NAME}} :: viewdocs.io</title>
     <link href='http://fonts.googleapis.com/css?family=Source+Code+Pro:300,600' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=EB+Garamond:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="http://static.gist.io/css/screen.css">
     <style type="text/css">
-        #gistbody h1:first-child { font-family: 'Oswald', sans-serif; font-size: 1.8em; }
+        #gistbody h1:first-child { font-family: 'Oswald', sans-serif; font-size: 1.8em; display: block !important;}
         h3 { text-transform: uppercase; font-size: 0.99em; }
-        body { font-family: 'Crimson Text', Georgia, serif; }
+        body { font-family: 'EB Garamond', Georgia, serif; }
     </style>
 </head>
 <body>
@@ -17,9 +17,9 @@
         <header>
             <h1 id="gistid"><a href="http://github.com/{{USER}}/{{NAME}}">{{NAME}}</a> :: <a href="/{{NAME}}">index</a></h1>
         </header>
-        <div id="gistbody" class="instapaper_body entry-content">
+        <article id="gistbody" class="instapaper_body entry-content">
             {{CONTENT}}
-        </div>
+        </article>
     </section>
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -2,7 +2,7 @@
 
 Viewdocs is [Read the Docs](https://readthedocs.org/) meets [Gist.io](http://gist.io/) for simple Markdown project documentation.
 
-**It renders Markdown files in your repository's `docs` directory as simple static pages like this one.**
+**It renders Markdown in your repository's `docs` directory as simple static pages.**
 
 Just make a `docs` directory in your Github project repository and put an `index.md` file in there to get started. Then browse to:
 
