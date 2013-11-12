@@ -14,5 +14,7 @@ This page is an example of what documentation will look like by default. Here is
 
 For the adventurous, make your own `docs/template.html` based on the [default template](https://github.com/progrium/viewdocs/blob/master/docs/template.html) for custom layouts. I also highly recommend you [read the source](https://github.com/progrium/viewdocs/blob/master/viewdocs.go) to this app. It's only 150 lines of Go.
 
+If you want to hack on it, please [check this out](/viewdocs/development).
+
 Enjoy!<br />
 [Jeff Lindsay](http://twitter.com/progrium)
