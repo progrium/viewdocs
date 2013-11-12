@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"regexp"
 
 	"code.google.com/p/vitess/go/cache"
 )
@@ -82,7 +83,17 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		resp.Body.Close()
 		body = []byte("# Page not found")
 	}
-	payload, err := json.Marshal(map[string]string{"text": string(body)})
+
+	bodyStr := string(body)
+	// Ajust relative links for specific git revisions
+	// FIXME: This doesn't handle relative links on the template / layout,
+	//        just on the markdown page itself
+	if ref != "master" {
+		reg := regexp.MustCompile(`(\[[^\]]+\]\()(/`+repo+`)([^~)])`)
+		bodyStr = reg.ReplaceAllString(bodyStr, "$1$2~"+ref+"$3")
+	}
+
+	payload, err := json.Marshal(map[string]string{"text": bodyStr})
 	if err != nil {
 		return "", err
 	}
