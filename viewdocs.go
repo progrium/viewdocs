@@ -27,11 +27,19 @@ func (cv *CacheValue) Size() int {
 	return len(cv.Value)
 }
 
-func parseRequest(r *http.Request) (user, repo, doc string, err error) {
+func parseRequest(r *http.Request) (user, repo, ref, doc string, err error) {
 	hostname := strings.Split(r.Host, ".")
 	user = hostname[0]
 	path := strings.Split(r.RequestURI, "/")
-	repo = path[1]
+
+	repoAndRef := strings.Split(path[1], "~")
+	repo = repoAndRef[0]
+	if len(repoAndRef) == 1 {
+		ref = "master"
+	} else {
+		ref = repoAndRef[1]
+	}
+
 	if len(path) < 3 || (len(path) == 3 && strings.HasSuffix(r.RequestURI, "/")) {
 		doc = "index"
 	} else {
@@ -43,10 +51,10 @@ func parseRequest(r *http.Request) (user, repo, doc string, err error) {
 	return
 }
 
-func fetchAndRenderDoc(user, repo, doc string) (string, error) {
+func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	template := make(chan string)
 	go func() {
-		resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/master/docs/template.html")
+		resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
 		if err != nil || resp.StatusCode == 404 {
 			template <- DefaultTemplate
 			return
@@ -59,7 +67,7 @@ func fetchAndRenderDoc(user, repo, doc string) (string, error) {
 		}
 		template <- string(body)
 	}()
-	resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/master/docs/"+doc+".md")
+	resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+doc+".md")
 	if err != nil {
 		return "", err
 	}
@@ -127,18 +135,18 @@ func main() {
 		}
 		switch r.Method {
 		case "GET":
-			user, repo, doc, err := parseRequest(r)
+			user, repo, ref, doc, err := parseRequest(r)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(err.Error()))
 				return
 			}
-			log.Printf("Building docs for '%s/%s'", user, repo)
-			key := user + ":" + repo + ":" + doc
+			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
+			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
 			var output string
 			if !ok {
-				output, err = fetchAndRenderDoc(user, repo, doc)
+				output, err = fetchAndRenderDoc(user, repo, ref, doc)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
