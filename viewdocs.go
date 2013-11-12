@@ -1,26 +1,26 @@
 package main
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 
 	"code.google.com/p/vitess/go/cache"
 )
 
-const CacheCapacity = 256*1024*1024 // 256MB
-const CacheTTL = 60 // raw.github.com cache TTL is ~120
+const CacheCapacity = 256 * 1024 * 1024 // 256MB
+const CacheTTL = 60                     // raw.github.com cache TTL is ~120
 
 var DefaultTemplate string
 
 type CacheValue struct {
-	Value string
+	Value     string
 	CreatedAt int64
 }
 
@@ -46,8 +46,8 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string, err error) {
 	} else {
 		doc = strings.Join(path[2:], "/")
 		if strings.HasSuffix(doc, "/") {
-        	doc = doc[:len(doc)-1]
-    	}
+			doc = doc[:len(doc)-1]
+		}
 	}
 	return
 }
@@ -55,7 +55,7 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string, err error) {
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	template := make(chan string)
 	go func() {
-		resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
+		resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/template.html")
 		if err != nil || resp.StatusCode == 404 {
 			template <- DefaultTemplate
 			return
@@ -68,7 +68,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		}
 		template <- string(body)
 	}()
-	resp, err := http.Get("https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+doc+".md")
+	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc + ".md")
 	if err != nil {
 		return "", err
 	}
@@ -89,7 +89,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	// FIXME: This doesn't handle relative links on the template / layout,
 	//        just on the markdown page itself
 	if ref != "master" {
-		reg := regexp.MustCompile(`(\[[^\]]+\]\()(/`+repo+`)([^~)])`)
+		reg := regexp.MustCompile(`(\[[^\]]+\]\()(/` + repo + `)([^~)])`)
 		bodyStr = reg.ReplaceAllString(bodyStr, "$1$2~"+ref+"$3")
 	}
 
@@ -109,7 +109,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	output := strings.Replace(<-template, "{{CONTENT}}", string(body), 1)
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
-	return output, nil	
+	return output, nil
 }
 
 func main() {
@@ -138,7 +138,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.RequestURI == "/" {
-			http.Redirect(w, r, "http://progrium.viewdocs.io/viewdocs", 301)	
+			http.Redirect(w, r, "http://progrium.viewdocs.io/viewdocs", 301)
 			return
 		}
 		if r.RequestURI == "/favicon.ico" {
@@ -167,7 +167,7 @@ func main() {
 				log.Println("CACHE MISS:", key, lru.StatsJSON())
 			} else {
 				output = value.(*CacheValue).Value
-				if time.Now().Unix() - value.(*CacheValue).CreatedAt > CacheTTL {
+				if time.Now().Unix()-value.(*CacheValue).CreatedAt > CacheTTL {
 					lru.Delete(key)
 				}
 			}
@@ -176,6 +176,6 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
-	log.Println("Listening on port "+port)
+	log.Println("Listening on port " + port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
