@@ -1,1 +1,0 @@
-# This is an example page in a subdirectory
