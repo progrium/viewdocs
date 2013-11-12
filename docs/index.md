@@ -18,5 +18,6 @@ For the adventurous, make your own `docs/template.html` based on the [default te
 
 If you want to hack on it, please [check this out](/viewdocs/development).
 
+<br />
 Enjoy!<br />
 [Jeff Lindsay](http://twitter.com/progrium)
