@@ -94,6 +94,11 @@ func fetchAndRenderDoc(user, repo, doc string) (string, error) {
 }
 
 func main() {
+	if os.Getenv("ACCESS_TOKEN") == "" {
+		// TODO: Add direct link to Development section of the README
+		log.Fatal("ACCESS_TOKEN was not found!")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8888"
