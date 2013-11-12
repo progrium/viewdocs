@@ -1,6 +1,6 @@
 # Example page
 
-Hello there! This is an example documentation page for [viewdocs.io](http://viewdocs.io), a super-lightweight project documentation platform.
+Hello there! This is an example documentation page for [Viewdocs](http://viewdocs.io), a super-lightweight project documentation platform inspired by [Gist.io](http://gist.io).
 
 Now look up. _Further_. Above the post title. See that grey text?
 

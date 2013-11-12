@@ -12,11 +12,15 @@ Any other Markdown files in your `docs` directory are available as a subpath, in
 
 This page is an example of what documentation will look like by default. Here is [another example page](/viewdocs/example). The source for these pages are in the [docs directory](https://github.com/progrium/viewdocs/tree/master/docs) of the Viewdocs project.
 
-### Advanced
+### Advanced Usage
 
-For the adventurous, make your own `docs/template.html` based on the [default template](https://github.com/progrium/viewdocs/blob/master/docs/template.html) for custom layouts. I also highly recommend you [read the source](https://github.com/progrium/viewdocs/blob/master/viewdocs.go) to this app. It's only 150 lines of Go.
+You can show documentation for different [branches](http://inconshreveable.viewdocs.io/ngrok~master/DEVELOPMENT) or [tags](http://discourse.viewdocs.io/discourse~v0.9.6/INSTALL-ubuntu) of a repository by including a reference name after a tilde in the repository part of the path. It would look like this:
 
-If you want to hack on it, please [check this out](/viewdocs/development).
+	http://<github-username>.viewdocs.io/<repository-name>~<refname>
+
+You can also customize the look and layout of your docs. Make your own `docs/template.html` based on the [default template](https://github.com/progrium/viewdocs/blob/master/docs/template.html) and your pages will be rendered with that template. 
+
+I also highly recommend you [read the source](https://github.com/progrium/viewdocs/blob/master/viewdocs.go) to this app. It's only 150 lines of Go. If you want to hack on Viewdocs, [check this out](/viewdocs/development).
 
 <br />
 Enjoy!<br />
