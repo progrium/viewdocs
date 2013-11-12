@@ -12,5 +12,7 @@ You can update pages by just pushing to your repository or editing directly on G
 
 For the adventurous, make your own `docs/template.html` based on the [default template](https://github.com/progrium/viewdocs/blob/master/docs/template.html).
 
+If you want to hack on it, please [check this out](/viewdocs/development).
+
 Enjoy!<br />
 [Jeff Lindsay](http://twitter.com/progrium)
