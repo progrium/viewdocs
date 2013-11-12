@@ -1,6 +1,6 @@
 # Welcome to Viewdocs
 
-Viewdocs is [Read the Docs](https://readthedocs.org/) meets [Gist.io](http://gist.io/) for simple project documentation. It renders Markdown in your repository's `docs` directory as simple static pages.
+Viewdocs is [Read the Docs](https://readthedocs.org/) meets [Gist.io](http://gist.io/) for simple project documentation. It renders Markdown from your repository's `docs` directory as simple static pages.
 
 ### Getting Started
 
