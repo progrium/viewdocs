@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"code.google.com/p/go.net/html"
 	"code.google.com/p/vitess/go/cache"
 )
 
@@ -40,7 +42,7 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	}
 
 	if len(path) < 3 || (len(path) == 3 && strings.HasSuffix(r.RequestURI, "/")) {
-		doc = "index"
+		doc = "index.md"
 	} else {
 		doc = strings.Join(path[2:], "/")
 		if strings.HasSuffix(doc, "/") {
@@ -66,7 +68,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		}
 		template <- string(body)
 	}()
-	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc + ".md")
+	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
 	if err != nil {
 		return "", err
 	}
@@ -100,9 +102,43 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	output := strings.Replace(<-template, "{{CONTENT}}", string(body), 1)
+
+	// Fix relative links
+	htmldoc, err := html.Parse(strings.NewReader(string(body)))
+	if err != nil {
+		return "", err
+	}
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for i, a := range n.Attr {
+				if a.Key == "href" {
+					fs := strings.Index(a.Val, "/")
+					fc := strings.Index(a.Val, ":")
+					fh := strings.Index(a.Val, "#")
+					if fs == 0 || fh == 0 ||
+						(fc >= 0 && fc < fs) ||
+						(fh >= 0 && fh < fs) {
+						continue
+					}
+					n.Attr[i].Val = "/" + repo + "/" + a.Val
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(htmldoc)
+	b := new(bytes.Buffer)
+	if err := html.Render(b, htmldoc); err != nil {
+		return "", err
+	}
+
+	output := strings.Replace(<-template, "{{CONTENT}}", b.String(), 1)
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
+
 	return output, nil
 }
 
