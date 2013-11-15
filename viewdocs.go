@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -93,11 +92,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		bodyStr = reg.ReplaceAllString(bodyStr, "$1$2~"+ref+"$3")
 	}
 
-	payload, err := json.Marshal(map[string]string{"text": bodyStr})
-	if err != nil {
-		return "", err
-	}
-	resp, err = http.Post("https://api.github.com/markdown?access_token="+os.Getenv("ACCESS_TOKEN"), "application/json", bytes.NewBuffer(payload))
+	resp, err = http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", bytes.NewBufferString(bodyStr))
 	if err != nil {
 		return "", err
 	}
