@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -115,8 +114,12 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for i, a := range n.Attr {
 				if a.Key == "href" {
-					u, _ := url.Parse(a.Val) // Ignore errors
-					if u.IsAbs() {
+					fs := strings.Index(a.Val, "/")
+					fc := strings.Index(a.Val, ":")
+					fh := strings.Index(a.Val, "#")
+					if fs == 0 || fh == 0 ||
+						(fc >= 0 && fc < fs) ||
+						(fh >= 0 && fh < fs) {
 						continue
 					}
 					dir := path.Dir(doc)
