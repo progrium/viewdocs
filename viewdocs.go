@@ -69,6 +69,16 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		}
 		template <- string(body)
 	}()
+	// https://github.com/github/markup/blob/b865add2e053f8cea3d7f4d9dcba001bdfd78994/lib/github/markups.rb#L1
+	mdExts := map[string]bool{
+		".md":       true,
+		".markdown": true,
+		".mkdn":     true,
+		".mdown":    true,
+	}
+	if ok, _ := mdExts[path.Ext(doc)]; !ok {
+		doc += ".md"
+	}
 	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
 	if err != nil {
 		return "", err
