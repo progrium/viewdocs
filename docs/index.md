@@ -12,6 +12,10 @@ Any other Markdown files in your `docs` directory are available as a subpath, in
 
 This page is an example of what documentation will look like by default. Here is [another example page](/viewdocs/example). The source for these pages are in the [docs directory](https://github.com/progrium/viewdocs/tree/master/docs) of the Viewdocs project.
 
+### Preview changes before pushing documentation back the repository
+
+If you want to find out how things look like locally before pushing your code back to the remote repository, you might want to try out [`previewdocs`](http://fgrehm.viewdocs.io/previewdocs).
+
 ### Advanced Usage
 
 You can show documentation for different [branches](http://inconshreveable.viewdocs.io/ngrok~master/DEVELOPMENT) or [tags](http://discourse.viewdocs.io/discourse~v0.9.6/INSTALL-ubuntu) of a repository by including a reference name after a tilde in the repository part of the path. It would look like this:
