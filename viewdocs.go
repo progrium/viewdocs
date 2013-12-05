@@ -26,7 +26,7 @@ func (cv *CacheValue) Size() int {
 	return len(cv.Value)
 }
 
-func parseRequest(r *http.Request) (user, repo, ref, doc string, err error) {
+func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	hostname := strings.Split(r.Host, ".")
 	user = hostname[0]
 	path := strings.Split(r.RequestURI, "/")
@@ -140,12 +140,7 @@ func main() {
 		}
 		switch r.Method {
 		case "GET":
-			user, repo, ref, doc, err := parseRequest(r)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(err.Error()))
-				return
-			}
+			user, repo, ref, doc := parseRequest(r)
 			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
 			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
