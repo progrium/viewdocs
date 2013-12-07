@@ -40,6 +40,32 @@ By the way, the "Milkshakes ingredients" subtitle was a fifth-level heading. It'
 
 Since you've come this far, you are probably wondering why I don't support something you want me to support. You can help make Viewdocs better by [contributing to the project](https://github.com/progrium/viewdocs) or [filing a bug/feature request](https://github.com/progrium/viewdocs/issues).
 
+## Also: Syntax highlighting
+
+By referencing a [pygments](http://pygments.org/) stylesheet on your docs layout, you'll get some nice looking code blocks, just like you do on your READMEs hosted on GitHub.
+
+Here's some Ruby code:
+
+```ruby
+class User
+  attr_accessor :name, :email, :password
+  def valid_password?(password)
+    password == 'WAT?!'
+  end
+end
+```
+
+And some Golang code:
+
+```go
+package main
+import "fmt"
+
+func main() {
+  fmt.Println("Hello world!")
+}
+```
+
 ## Also: images
 
 You can embed images in posts too, and they'll respect the width of your browser:
