@@ -52,7 +52,7 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	return
 }
 
-func fixRelativeLinks(doc string, repo string, ref string, body string) (string, error) {
+func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 	repoAndRef := repo
 	if ref != "master" {
 		repoAndRef += "~" + ref
