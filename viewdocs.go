@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -53,7 +52,7 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	return
 }
 
-func fixRelativeLinks(doc string, repo string, ref string, body string) (string, error) {
+func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 	repoAndRef := repo
 	if ref != "master" {
 		repoAndRef += "~" + ref
@@ -137,13 +136,6 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	}
 
 	bodyStr := string(body)
-	// Ajust relative links for specific git revisions
-	// FIXME: This doesn't handle relative links on the template / layout,
-	//        just on the markdown page itself
-	if ref != "master" {
-		reg := regexp.MustCompile(`(\[[^\]]+\]\()(/` + repo + `)([^~)])`)
-		bodyStr = reg.ReplaceAllString(bodyStr, "$1$2~"+ref+"$3")
-	}
 
 	resp, err = http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
 	if err != nil {
