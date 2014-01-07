@@ -157,7 +157,7 @@ can be referenced in javascript as if it were remote:
 
 ### JSON 
 
-JSON can be embedded in a markdown file and then parsed out of the rendered page.  Give the following markdown content in a file nav.md:
+JSON can be embedded in a markdown file and then parsed out of the rendered page.  Given the following markdown content in a file nav.md:
 
     <div>
         [
