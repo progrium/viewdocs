@@ -92,6 +92,12 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	template := make(chan string)
+	templateRecv := false
+	defer func() {
+		if !templateRecv {
+			<-template
+		}
+	}()
 	go func() {
 		resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/template.html")
 		if err != nil || resp.StatusCode == 404 {
@@ -147,6 +153,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	}
 
 	output := strings.Replace(<-template, "{{CONTENT}}", string(body), 1)
+	templateRecv = true
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
 
