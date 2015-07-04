@@ -180,10 +180,14 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		return "", err
 	}
 
+	pagesClass := strings.Replace(doc, "/", "-", -1)
+	pagesClass = pagesClass[:len(pagesClass)-len(path.Ext(pagesClass))]
+
 	output := strings.Replace(<-template, "{{CONTENT}}", string(body), 1)
 	templateRecv = true
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
+	output = strings.Replace(output, "{{PAGE_CLASS}}", pagesClass, -1)
 
 	// Fix relative links
 	output, err = fixRelativeLinks(doc, repo, ref, output)
