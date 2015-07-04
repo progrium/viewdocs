@@ -28,9 +28,17 @@ func (cv *CacheValue) Size() int {
 	return len(cv.Value)
 }
 
+func getenv(key string, default_value string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		value = default_value
+	}
+	return value
+}
+
 func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	hostname := strings.Split(r.Host, ".")
-	user = hostname[0]
+	user = getenv("GITHUB_USER", hostname[0])
 	path := strings.Split(r.RequestURI, "/")
 
 	repoAndRef := strings.Split(path[1], "~")
