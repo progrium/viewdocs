@@ -255,6 +255,11 @@ func main() {
 				return
 			}
 
+			if !strings.HasSuffix(r.RequestURI, "/") {
+				http.Redirect(w, r, r.RequestURI+"/", 301)
+				return
+			}
+
 			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
 			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
