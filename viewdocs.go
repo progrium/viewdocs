@@ -100,9 +100,9 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 
 func fetchTemplate(template chan string, user string, repo string, ref string, name string) {
 	log.Println("Fetching template")
-	fetched := fetchUrl(template, "https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + name + ".html")
+	fetched := fetchUrl(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+name+".html")
 	if !fetched && name != "template" {
-		fetched = fetchUrl(template, "https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/template.html")
+		fetched = fetchUrl(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
 	}
 
 	if !fetched {
