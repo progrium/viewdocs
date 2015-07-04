@@ -98,28 +98,48 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 	return b.String(), nil
 }
 
+func fetchTemplate(template chan string, user string, repo string, ref string, name string) {
+	log.Println("Fetching template")
+	fetched := fetchUrl(template, "https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + name + ".html")
+	if !fetched && name != "template" {
+		fetched = fetchUrl(template, "https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/template.html")
+	}
+
+	if !fetched {
+		template <- DefaultTemplate
+	}
+}
+
+func fetchUrl(channel chan string, url string) bool {
+	resp, err := http.Get(url)
+	if err == nil && resp.StatusCode != 404 {
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err == nil {
+			channel <- string(body)
+			return true
+		}
+	}
+
+	return false
+}
+
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	template := make(chan string)
+	templateName := "template"
 	templateRecv := false
 	defer func() {
 		if !templateRecv {
 			<-template
 		}
 	}()
-	go func() {
-		resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/template.html")
-		if err != nil || resp.StatusCode == 404 {
-			template <- DefaultTemplate
-			return
-		}
-		body, err := ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			template <- DefaultTemplate
-			return
-		}
-		template <- string(body)
-	}()
+
+	if doc == "index.md" {
+		templateName = "home"
+	}
+
+	go fetchTemplate(template, user, repo, ref, templateName)
+
 	// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
 	mdExts := map[string]bool{
 		".md":        true,
