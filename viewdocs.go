@@ -194,6 +194,25 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	return output, nil
 }
 
+func isAsset(name string) bool {
+	assetExts := map[string]bool{
+		".appcache": true,
+		".bmp":      true,
+		".css":      true,
+		".jpg":      true,
+		".jpeg":     true,
+		".js":       true,
+		".json":     true,
+		".png":      true,
+	}
+
+	if ok, _ := assetExts[path.Ext(name)]; ok {
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	if os.Getenv("ACCESS_TOKEN") == "" {
 		// TODO: Add direct link to Development section of the README
@@ -229,6 +248,13 @@ func main() {
 		switch r.Method {
 		case "GET":
 			user, repo, ref, doc := parseRequest(r)
+
+			if isAsset(doc) {
+				assetUrl := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
+				http.Redirect(w, r, assetUrl, 301)
+				return
+			}
+
 			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
 			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
