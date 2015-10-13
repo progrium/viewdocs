@@ -14,24 +14,36 @@ import (
 	"golang.org/x/net/html"
 )
 
-const CacheCapacity = 256 * 1024 * 1024 // 256MB
-const CacheTTL = 60                     // raw.github.com cache TTL is ~120
+// CacheCapacity is an integer of memory in megabytes
+// allocated for in-memory caching of processed documents
+const CacheCapacity = 256 * 1024 * 1024
 
+// CacheTTL is an integer of seconds that is used to
+// configure the length of time a document stays in the cache
+// raw.github.com cache TTL is ~120
+const CacheTTL = 60
+
+// DefaultTemplate is a string that contains the default template
+// when a given repository does not have it's own template
 var DefaultTemplate string
 
+// CacheValue is a struct that contains a processed document
+// and some metadata as to when that document was created
 type CacheValue struct {
 	Value     string
 	CreatedAt int64
 }
 
+// Size is a method attached to the CacheValue struct which
+// returns the length of a cache entry
 func (cv *CacheValue) Size() int {
 	return len(cv.Value)
 }
 
-func getenv(key string, default_value string) string {
+func getenv(key string, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		value = default_value
+		value = defaultValue
 	}
 	return value
 }
@@ -100,9 +112,9 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 
 func fetchTemplate(template chan string, user string, repo string, ref string, name string) {
 	log.Println("Fetching template")
-	fetched := fetchUrl(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+name+".html")
+	fetched := fetchURL(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+name+".html")
 	if !fetched && name != "template" {
-		fetched = fetchUrl(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
+		fetched = fetchURL(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
 	}
 
 	if !fetched {
@@ -110,7 +122,7 @@ func fetchTemplate(template chan string, user string, repo string, ref string, n
 	}
 }
 
-func fetchUrl(channel chan string, url string) bool {
+func fetchURL(channel chan string, url string) bool {
 	resp, err := http.Get(url)
 	if err == nil && resp.StatusCode != 404 {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -255,8 +267,8 @@ func main() {
 			user, repo, ref, doc := parseRequest(r)
 
 			if isAsset(doc) {
-				assetUrl := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
-				http.Redirect(w, r, assetUrl, 301)
+				assetURL := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
+				http.Redirect(w, r, assetURL, 301)
 				return
 			}
 
