@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/go.net/html"
-	"code.google.com/p/vitess/go/cache"
+	"github.com/youtube/vitess/go/cache"
+	"golang.org/x/net/html"
 )
 
 const CacheCapacity = 256 * 1024 * 1024 // 256MB
