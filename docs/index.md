@@ -24,7 +24,7 @@ You can show documentation for different [branches](http://inconshreveable.viewd
 
 You can also customize the look and layout of your docs. Make your own `docs/template.html` based on the [default template](https://github.com/progrium/viewdocs/blob/master/docs/template.html) and your pages will be rendered with that template. If you create a `home.html` template, this will be used for your project's landing page.
 
-I also highly recommend you [read the source](https://github.com/progrium/viewdocs/blob/master/viewdocs.go) to this app. It's less than 200 lines of Go. If you want to hack on Viewdocs, [check this out](/viewdocs/development).
+I also highly recommend you [read the source](https://github.com/progrium/viewdocs/blob/master/viewdocs.go) to this app. It's less than 400 lines of Go. If you want to hack on Viewdocs, [check this out](/viewdocs/development).
 
 <br />
 Enjoy!<br />
