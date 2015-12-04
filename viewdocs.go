@@ -305,33 +305,34 @@ func readFile(path string) (string, error) {
 }
 
 func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo string, ref string, doc string) bool {
+	redirectTo := ""
+	if r.RequestURI == "/" {
+		redirectTo = "http://progrium.viewdocs.io/viewdocs/"
+	}
 	if isAsset(doc) {
-		newURL := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
-		log.Println("REDIRECT: ", newURL)
-		http.Redirect(w, r, newURL, 301)
-		return true
+		redirectTo = "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
 	}
 	if !strings.HasSuffix(r.RequestURI, "/") {
 		for ext := range markdownExtensions() {
 			if strings.HasSuffix(r.RequestURI, ext) {
-				newURL := strings.TrimSuffix(r.RequestURI, ext) + "/"
-				log.Println("REDIRECT: ", newURL)
-				http.Redirect(w, r, newURL, 301)
-				return true
+				redirectTo = strings.TrimSuffix(r.RequestURI, ext) + "/"
+				break
 			}
 		}
-		newURL := r.RequestURI + "/"
-		log.Println("REDIRECT: ", newURL)
-		http.Redirect(w, r, newURL, 301)
-		return true
+		if redirectTo == "" {
+			redirectTo = r.RequestURI + "/"
+		}
 	}
 	for ext := range markdownExtensions() {
 		if strings.HasSuffix(r.RequestURI, ext+"/") {
-			newURL := strings.TrimSuffix(r.RequestURI, ext+"/") + "/"
-			log.Println("REDIRECT: ", newURL)
-			http.Redirect(w, r, newURL, 301)
-			return true
+			redirectTo = strings.TrimSuffix(r.RequestURI, ext+"/") + "/"
+			break
 		}
+	}
+	if redirectTo != "" {
+		log.Println("REDIRECT: ", redirectTo)
+		http.Redirect(w, r, redirectTo, 301)
+		return true
 	}
 	return false
 }
@@ -357,10 +358,6 @@ func main() {
 	DefaultTemplate = string(body)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.RequestURI == "/" {
-			http.Redirect(w, r, "http://progrium.viewdocs.io/viewdocs", 301)
-			return
-		}
 		if r.RequestURI == "/favicon.ico" {
 			return
 		}
