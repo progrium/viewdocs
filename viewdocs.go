@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"io/ioutil"
 	"log"
@@ -46,6 +47,10 @@ func getenv(key string, defaultValue string) string {
 		value = defaultValue
 	}
 	return value
+}
+
+func pathPrefix() string {
+	return getenv("PATH_PREFIX", "")
 }
 
 func parseRequest(r *http.Request) (user, repo, ref, doc string) {
@@ -111,7 +116,22 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 }
 
 func fetchTemplate(template chan string, user string, repo string, ref string, name string) {
-	log.Println("Fetching template")
+	if getenv("DEBUG", "0") == "1" {
+		pathPrefix := pathPrefix()
+		bodyStr, err := readFile(pathPrefix + "docs/" + name + ".html")
+		if err == nil {
+			template <- bodyStr
+			return
+		}
+		if name != "template" {
+			bodyStr, err := readFile(pathPrefix + "docs/template.html")
+			if err == nil {
+				template <- bodyStr
+				return
+			}
+		}
+	}
+
 	fetched := fetchURL(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/"+name+".html")
 	if !fetched && name != "template" {
 		fetched = fetchURL(template, "https://raw.github.com/"+user+"/"+repo+"/"+ref+"/docs/template.html")
@@ -137,6 +157,13 @@ func fetchURL(channel chan string, url string) bool {
 }
 
 func fetchDoc(user, repo, ref, doc string) (string, error) {
+  if getenv("DEBUG", "0") == "1" {
+    pathPrefix := pathPrefix()
+    bodyStr, err := readFile(pathPrefix + "docs/" + doc)
+    if err == nil {
+      return bodyStr, err
+    }
+  }
 	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
 	if err != nil {
 		return "", err
@@ -185,9 +212,9 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	}
 
 	bodyStr, err := fetchDoc(user, repo, ref, doc)
-		if err != nil {
-			return "", err
-		}
+	if err != nil {
+		return "", err
+	}
 
 	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
 	if err != nil {
@@ -235,6 +262,21 @@ func isAsset(name string) bool {
 	}
 
 	return false
+}
+
+func readFile(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return strings.Join(lines, "\n"), scanner.Err()
 }
 
 func main() {
