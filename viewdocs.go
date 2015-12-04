@@ -164,6 +164,7 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 			return bodyStr, err
 		}
 	}
+	log.Println("FETCH: https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
 	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
 	if err != nil {
 		return "", err
