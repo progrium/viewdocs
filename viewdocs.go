@@ -309,6 +309,9 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 	if r.RequestURI == "/" {
 		redirectTo = "http://progrium.viewdocs.io/viewdocs/"
 	}
+	if strings.Contains(r.Host, "progrium") && strings.HasPrefix(r.RequestURI, "/dokku") {
+		redirectTo = "http://dokku.viewdocs.io" + r.RequestURI
+	}
 	if isAsset(doc) {
 		redirectTo = "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
 	}
