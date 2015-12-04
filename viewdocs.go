@@ -183,9 +183,9 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 			if doc == "docs/index.md" {
 				for ext := range markdownExtensions() {
 					newDoc = "README" + ext
-			bodyStr, err := fetchDoc(user, repo, ref, newDoc)
+					bodyStr, err := fetchDoc(user, repo, ref, newDoc)
 					return cleanupDocLinks(bodyStr, err)
-			}
+				}
 			}
 			bodyStr, err := fetchDoc(user, repo, ref, newDoc)
 			return cleanupDocLinks(bodyStr, err)
@@ -337,16 +337,11 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 
 func main() {
 	if os.Getenv("ACCESS_TOKEN") == "" {
-		// TODO: Add direct link to Development section of the README
-		log.Fatal("ACCESS_TOKEN was not found!")
+		log.Fatal("ACCESS_TOKEN was not found. Read http://progrium.viewdocs.io/viewdocs/development/ for more info")
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8888"
-	}
-	doNotCache := os.Getenv("USE_CACHE") == "false"
-
+	port := getenv("PORT", "8888")
+	doNotCache := getenv("USE_CACHE", "true") == "false"
 	lru := cache.NewLRUCache(CacheCapacity)
 
 	resp, err := http.Get("https://raw.github.com/progrium/viewdocs/master/docs/template.html")
