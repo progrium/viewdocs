@@ -136,6 +136,25 @@ func fetchURL(channel chan string, url string) bool {
 	return false
 }
 
+func fetchDoc(user, repo, ref, doc string) (string, error) {
+	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
+	if err != nil {
+		return "", err
+	}
+	var body []byte
+	if resp.StatusCode == 200 {
+		body, err = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		resp.Body.Close()
+		body = []byte("# Page not found")
+	}
+	return string(body), nil
+}
+
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	template := make(chan string)
 	templateName := "template"
@@ -164,29 +183,17 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	if ok, _ := mdExts[path.Ext(doc)]; !ok {
 		doc += ".md"
 	}
-	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
-	if err != nil {
-		return "", err
-	}
-	var body []byte
-	if resp.StatusCode == 200 {
-		body, err = ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
+
+	bodyStr, err := fetchDoc(user, repo, ref, doc)
 		if err != nil {
 			return "", err
 		}
-	} else {
-		resp.Body.Close()
-		body = []byte("# Page not found")
-	}
 
-	bodyStr := string(body)
-
-	resp, err = http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
+	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
 	if err != nil {
 		return "", err
 	}
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return "", err
