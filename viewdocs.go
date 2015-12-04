@@ -199,14 +199,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	go fetchTemplate(template, user, repo, ref, templateName)
 
 	// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
-	mdExts := map[string]bool{
-		".md":        true,
-		".mkdn":      true,
-		".mdwn":      true,
-		".mdown":     true,
-		".markdown":  true,
-		".litcoffee": true,
-	}
+	mdExts := markdownExtensions()
 	if ok, _ := mdExts[path.Ext(doc)]; !ok {
 		doc += ".md"
 	}
@@ -244,6 +237,17 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	return output, nil
 }
 
+func markdownExtensions() map[string]bool {
+	return map[string]bool{
+		".md":        true,
+		".mkdn":      true,
+		".mdwn":      true,
+		".mdown":     true,
+		".markdown":  true,
+		".litcoffee": true,
+	}
+}
+
 func isAsset(name string) bool {
 	assetExts := map[string]bool{
 		".appcache": true,
@@ -277,6 +281,38 @@ func readFile(path string) (string, error) {
 		lines = append(lines, scanner.Text())
 	}
 	return strings.Join(lines, "\n"), scanner.Err()
+}
+
+func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo string, ref string, doc string) bool {
+	if isAsset(doc) {
+		newURL := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
+		log.Println("REDIRECT: ", newURL)
+		http.Redirect(w, r, newURL, 301)
+		return true
+	}
+	if !strings.HasSuffix(r.RequestURI, "/") {
+		for ext := range markdownExtensions() {
+			if strings.HasSuffix(r.RequestURI, ext) {
+				newURL := strings.TrimSuffix(r.RequestURI, ext) + "/"
+				log.Println("REDIRECT: ", newURL)
+				http.Redirect(w, r, newURL, 301)
+				return true
+			}
+		}
+		newURL := r.RequestURI + "/"
+		log.Println("REDIRECT: ", newURL)
+		http.Redirect(w, r, newURL, 301)
+		return true
+	}
+	for ext := range markdownExtensions() {
+		if strings.HasSuffix(r.RequestURI, ext+"/") {
+			newURL := strings.TrimSuffix(r.RequestURI, ext+"/") + "/"
+			log.Println("REDIRECT: ", newURL)
+			http.Redirect(w, r, newURL, 301)
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
@@ -315,18 +351,10 @@ func main() {
 		switch r.Method {
 		case "GET":
 			user, repo, ref, doc := parseRequest(r)
-
-			if isAsset(doc) {
-				assetURL := "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
-				http.Redirect(w, r, assetURL, 301)
+			redirected := handleRedirects(w, r, user, repo, ref, doc)
+			if redirected {
 				return
 			}
-
-			if !strings.HasSuffix(r.RequestURI, "/") {
-				http.Redirect(w, r, r.RequestURI+"/", 301)
-				return
-			}
-
 			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
 			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
