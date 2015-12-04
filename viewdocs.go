@@ -157,13 +157,13 @@ func fetchURL(channel chan string, url string) bool {
 }
 
 func fetchDoc(user, repo, ref, doc string) (string, error) {
-  if getenv("DEBUG", "0") == "1" {
-    pathPrefix := pathPrefix()
-    bodyStr, err := readFile(pathPrefix + "docs/" + doc)
-    if err == nil {
-      return bodyStr, err
-    }
-  }
+	if getenv("DEBUG", "0") == "1" {
+		pathPrefix := pathPrefix()
+		bodyStr, err := readFile(pathPrefix + "docs/" + doc)
+		if err == nil {
+			return bodyStr, err
+		}
+	}
 	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
 	if err != nil {
 		return "", err
