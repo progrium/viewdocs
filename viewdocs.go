@@ -159,12 +159,12 @@ func fetchURL(channel chan string, url string) bool {
 func fetchDoc(user, repo, ref, doc string) (string, error) {
 	if getenv("DEBUG", "0") == "1" {
 		pathPrefix := pathPrefix()
-		bodyStr, err := readFile(pathPrefix + "docs/" + doc)
+		bodyStr, err := readFile(pathPrefix + doc)
 		if err == nil {
 			return bodyStr, err
 		}
 	}
-	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc)
+	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
 	if err != nil {
 		return "", err
 	}
@@ -177,9 +177,29 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 		}
 	} else {
 		resp.Body.Close()
+		if strings.HasPrefix(doc, "docs/") {
+			newDoc := strings.TrimPrefix(doc, "docs/")
+			// special-case the index page
+			if doc == "docs/index.md" {
+				for ext := range markdownExtensions() {
+					newDoc = "README" + ext
+			bodyStr, err := fetchDoc(user, repo, ref, newDoc)
+					return cleanupDocLinks(bodyStr, err)
+			}
+			}
+			bodyStr, err := fetchDoc(user, repo, ref, newDoc)
+			return cleanupDocLinks(bodyStr, err)
+		}
 		body = []byte("# Page not found")
 	}
 	return string(body), nil
+}
+
+func cleanupDocLinks(bodyStr string, err error) (string, error) {
+	if err == nil {
+		bodyStr = strings.Replace(bodyStr, "](docs/", "](", -1)
+	}
+	return bodyStr, err
 }
 
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
@@ -204,7 +224,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		doc += ".md"
 	}
 
-	bodyStr, err := fetchDoc(user, repo, ref, doc)
+	bodyStr, err := fetchDoc(user, repo, ref, "docs/"+doc)
 	if err != nil {
 		return "", err
 	}
