@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/youtube/vitess/go/cache"
-	"golang.org/x/net/html"
+	"github.com/progrium/viewdocs/Godeps/_workspace/src/github.com/youtube/vitess/go/cache"
+	"github.com/progrium/viewdocs/Godeps/_workspace/src/golang.org/x/net/html"
 )
 
 // CacheCapacity is an integer of memory in megabytes
