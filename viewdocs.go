@@ -247,6 +247,7 @@ func main() {
 	if port == "" {
 		port = "8888"
 	}
+	doNotCache := os.Getenv("USE_CACHE") == "false"
 
 	lru := cache.NewLRUCache(CacheCapacity)
 
@@ -288,7 +289,7 @@ func main() {
 			key := user + ":" + repo + ":" + doc + ":" + ref
 			value, ok := lru.Get(key)
 			var output string
-			if !ok {
+			if !ok || doNotCache {
 				output, err = fetchAndRenderDoc(user, repo, ref, doc)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
