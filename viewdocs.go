@@ -183,8 +183,7 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 			// special-case the index page
 			if doc == "docs/index.md" {
 				for ext := range markdownExtensions() {
-					newDoc = "README" + ext
-					bodyStr, err := fetchDoc(user, repo, ref, newDoc)
+					bodyStr, err := fetchDoc(user, repo, ref, "README"+ext)
 					return cleanupDocLinks(bodyStr, err)
 				}
 			}
