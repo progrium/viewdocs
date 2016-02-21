@@ -77,7 +77,8 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 	return
 }
 
-func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
+func fixRelativeLinks(user, repo, doc, ref, body string) (string, error) {
+	hostname := getenv("HOSTNAME", "viewdocs.io")
 	repoAndRef := repo
 	if ref != "master" {
 		repoAndRef += "~" + ref
@@ -91,15 +92,20 @@ func fixRelativeLinks(doc, repo, ref, body string) (string, error) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for i, a := range n.Attr {
 				if a.Key == "href" {
-					fs := strings.Index(a.Val, "/")
-					fc := strings.Index(a.Val, ":")
-					fh := strings.Index(a.Val, "#")
+					hrefValue := strings.TrimPrefix(a.Val, "http://"+user+"."+hostname+"")
+					if strings.Index(hrefValue, "/"+repo+"/") == 0 {
+						n.Attr[i].Val = "/" + repoAndRef + "/" + strings.TrimPrefix(hrefValue, "/"+repo+"/")
+						continue
+					}
+					fs := strings.Index(hrefValue, "/")
+					fc := strings.Index(hrefValue, ":")
+					fh := strings.Index(hrefValue, "#")
 					if fs == 0 || fh == 0 ||
 						(fc >= 0 && fc < fs) ||
 						(fh >= 0 && fh < fs) {
 						continue
 					}
-					n.Attr[i].Val = "/" + repoAndRef + "/" + a.Val
+					n.Attr[i].Val = "/" + repoAndRef + "/" + hrefValue
 				}
 			}
 		}
@@ -183,8 +189,7 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 			// special-case the index page
 			if doc == "docs/index.md" {
 				for ext := range markdownExtensions() {
-					newDoc = "README" + ext
-					bodyStr, err := fetchDoc(user, repo, ref, newDoc)
+					bodyStr, err := fetchDoc(user, repo, ref, "README"+ext)
 					return cleanupDocLinks(bodyStr, err)
 				}
 			}
@@ -250,7 +255,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	output = strings.Replace(output, "{{PAGE_CLASS}}", pagesClass, -1)
 
 	// Fix relative links
-	output, err = fixRelativeLinks(doc, repo, ref, output)
+	output, err = fixRelativeLinks(user, repo, doc, ref, output)
 	if err != nil {
 		return "", err
 	}
@@ -341,7 +346,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 }
 
 func main() {
-	if os.Getenv("ACCESS_TOKEN") == "" {
+	if getenv("ACCESS_TOKEN", "") == "" {
 		log.Fatal("ACCESS_TOKEN was not found. Read http://progrium.viewdocs.io/viewdocs/development/ for more info")
 	}
 
