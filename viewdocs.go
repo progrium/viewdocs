@@ -341,7 +341,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 }
 
 func main() {
-	if os.Getenv("ACCESS_TOKEN") == "" {
+	if getenv("ACCESS_TOKEN", "") == "" {
 		log.Fatal("ACCESS_TOKEN was not found. Read http://progrium.viewdocs.io/viewdocs/development/ for more info")
 	}
 
