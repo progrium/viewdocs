@@ -224,12 +224,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 
 	go fetchTemplate(template, user, repo, ref, templateName)
 
-	rawExts := map[string]bool{
-		".raw": true,
-	}
-	isRaw, _ := rawExts[path.Ext(doc)]
-
-	if !isRaw {
+	if !isRaw(doc) {
 		// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
 		mdExts := markdownExtensions()
 		if ok, _ := mdExts[path.Ext(doc)]; !ok {
@@ -242,7 +237,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		return "", err
 	}
 
-	if isRaw {
+	if isRaw(doc) {
 		return bodyStr, nil
 	}
 
@@ -307,6 +302,18 @@ func isAsset(name string) bool {
 	return false
 }
 
+func isRaw(name string) bool {
+	rawExts := map[string]bool{
+		".raw": true,
+	}
+
+	if ok, _ := rawExts[path.Ext(name)]; ok {
+		return true
+	}
+
+	return false
+}
+
 func readFile(path string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -340,7 +347,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 				break
 			}
 		}
-		if redirectTo == "" {
+		if redirectTo == "" && !isRaw(r.RequestURI) {
 			redirectTo = r.RequestURI + "/"
 		}
 	}
