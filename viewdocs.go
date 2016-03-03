@@ -253,6 +253,8 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	output = strings.Replace(output, "{{NAME}}", repo, -1)
 	output = strings.Replace(output, "{{USER}}", user, -1)
 	output = strings.Replace(output, "{{PAGE_CLASS}}", pagesClass, -1)
+	output = strings.Replace(output, "{{REF}}", ref, -1)
+	output = strings.Replace(output, "{{DOC}}", doc, -1)
 
 	// Fix relative links
 	output, err = fixRelativeLinks(user, repo, doc, ref, output)
