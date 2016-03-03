@@ -224,15 +224,26 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 
 	go fetchTemplate(template, user, repo, ref, templateName)
 
-	// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
-	mdExts := markdownExtensions()
-	if ok, _ := mdExts[path.Ext(doc)]; !ok {
-		doc += ".md"
+	rawExts := map[string]bool{
+		".raw": true,
+	}
+	isRaw, _ := rawExts[path.Ext(doc)]
+
+	if !isRaw {
+		// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
+		mdExts := markdownExtensions()
+		if ok, _ := mdExts[path.Ext(doc)]; !ok {
+			doc += ".md"
+		}
 	}
 
 	bodyStr, err := fetchDoc(user, repo, ref, "docs/"+doc)
 	if err != nil {
 		return "", err
+	}
+
+	if isRaw {
+		return bodyStr, nil
 	}
 
 	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
