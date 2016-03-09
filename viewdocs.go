@@ -224,15 +224,21 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 
 	go fetchTemplate(template, user, repo, ref, templateName)
 
-	// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
-	mdExts := markdownExtensions()
-	if ok, _ := mdExts[path.Ext(doc)]; !ok {
-		doc += ".md"
+	if !isAsset(doc) {
+		// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
+		mdExts := markdownExtensions()
+		if ok, _ := mdExts[path.Ext(doc)]; !ok {
+			doc += ".md"
+		}
 	}
 
 	bodyStr, err := fetchDoc(user, repo, ref, "docs/"+doc)
 	if err != nil {
 		return "", err
+	}
+
+	if isAsset(doc) {
+		return bodyStr, nil
 	}
 
 	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
@@ -319,7 +325,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 	if strings.Contains(r.Host, "progrium") && strings.HasPrefix(r.RequestURI, "/dokku") {
 		redirectTo = "http://dokku.viewdocs.io" + r.RequestURI
 	}
-	if isAsset(doc) {
+	if isAsset(doc) && !strings.Contains(r.Header.Get("Cache-Control"), "no-store") {
 		redirectTo = "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
 	}
 	if !strings.HasSuffix(r.RequestURI, "/") {
@@ -329,7 +335,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 				break
 			}
 		}
-		if redirectTo == "" {
+		if redirectTo == "" && !isAsset(r.RequestURI) {
 			redirectTo = r.RequestURI + "/"
 		}
 	}
