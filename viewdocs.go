@@ -224,10 +224,12 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 
 	go fetchTemplate(template, user, repo, ref, templateName)
 
-	// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
-	mdExts := markdownExtensions()
-	if ok, _ := mdExts[path.Ext(doc)]; !ok {
-		doc += ".md"
+	if !isAsset(doc) {
+		// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
+		mdExts := markdownExtensions()
+		if ok, _ := mdExts[path.Ext(doc)]; !ok {
+			doc += ".md"
+		}
 	}
 
 	bodyStr, err := fetchDoc(user, repo, ref, "docs/"+doc)
