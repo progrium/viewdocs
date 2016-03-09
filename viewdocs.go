@@ -237,6 +237,10 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		return "", err
 	}
 
+	if isAsset(doc) {
+		return bodyStr, nil
+	}
+
 	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
 	if err != nil {
 		return "", err
