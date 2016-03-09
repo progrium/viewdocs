@@ -335,7 +335,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 				break
 			}
 		}
-		if redirectTo == "" {
+		if redirectTo == "" && !isAsset(r.RequestURI) {
 			redirectTo = r.RequestURI + "/"
 		}
 	}
