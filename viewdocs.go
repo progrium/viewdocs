@@ -293,6 +293,7 @@ func isAsset(name string) bool {
 		".json":     true,
 		".png":      true,
 		".ico":      true,
+		".gif":      true,
 	}
 
 	if ok, _ := assetExts[path.Ext(name)]; ok {
