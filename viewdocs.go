@@ -324,7 +324,7 @@ func readFile(path string) (string, error) {
 func cacheKey(lruCache *cache.LRUCache, key string, fn callable) (string, error) {
 	var output string
 	var err error
-	doNotCache := getenv("USE_CACHE", "true") == "true"
+	doNotCache := getenv("USE_CACHE", "true") == "false"
 	value, ok := lruCache.Get(key)
 	if !ok || doNotCache {
 		log.Println("CACHE MISS:", key, lruCache.StatsJSON())
