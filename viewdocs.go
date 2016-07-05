@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -40,6 +41,8 @@ type CacheValue struct {
 func (cv *CacheValue) Size() int {
 	return len(cv.Value)
 }
+
+type callable func() (string, error)
 
 func getenv(key string, defaultValue string) string {
 	value := os.Getenv(key)
@@ -318,7 +321,47 @@ func readFile(path string) (string, error) {
 	return strings.Join(lines, "\n"), scanner.Err()
 }
 
-func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo string, ref string, doc string) bool {
+func cacheKey(lruCache *cache.LRUCache, key string, fn callable) (string, error) {
+	var output string
+	var err error
+	doNotCache := getenv("USE_CACHE", "true") == "true"
+	value, ok := lruCache.Get(key)
+	if !ok || doNotCache {
+		log.Println("CACHE MISS:", key, lruCache.StatsJSON())
+		output, err = fn()
+		if err != nil {
+			log.Println("CACHE LOOKUP FAIL:", key, lruCache.StatsJSON())
+			return output, err
+		}
+		lruCache.Set(key, &CacheValue{output, time.Now().Unix()})
+		log.Println("CACHE WRITE:", key, lruCache.StatsJSON())
+	} else {
+		output = value.(*CacheValue).Value
+		if time.Now().Unix()-value.(*CacheValue).CreatedAt > CacheTTL {
+			log.Println("CACHE DELETE:", key, lruCache.StatsJSON())
+			lruCache.Delete(key)
+		}
+	}
+	log.Println("CACHE RETURN:", key)
+	return output, nil
+}
+
+func getRepositoryConfig(lruCache *cache.LRUCache, user string, repo string, ref string) (map[string]interface{}, error) {
+	var dat map[string]interface{}
+	key := user + ":" + repo + ":viewdocs.json:" + ref
+	output, err := cacheKey(lruCache, key, func() (string, error) {
+		return fetchDoc(user, repo, ref, "docs/viewdocs.json")
+	})
+	if err != nil {
+		return dat, err
+	}
+	if err := json.Unmarshal([]byte(output), &dat); err != nil {
+		return dat, err
+	}
+	return dat, nil
+}
+
+func handleRedirects(w http.ResponseWriter, r *http.Request, config map[string]interface{}, user string, repo string, ref string, doc string) bool {
 	redirectTo := ""
 	if r.RequestURI == "/" {
 		redirectTo = "http://progrium.viewdocs.io/viewdocs/"
@@ -346,6 +389,25 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 			break
 		}
 	}
+
+	repoPrefix := repo
+	if ref != "master" {
+		repoPrefix = repo + "~" + ref
+	}
+
+	if redirectTo == "" {
+		if redirects, ok := config["redirects"]; ok {
+			redirectsMap, _ := redirects.(map[string]interface{})
+			redirect, ok := redirectsMap[doc]
+			if ok {
+				redirectTo = redirect.(string)
+				if !strings.HasPrefix(redirectTo, "http://") && !strings.HasPrefix(redirectTo, "https://") {
+					redirectTo = "/" + repoPrefix + "/" + strings.TrimSuffix(redirectTo, "/") + "/"
+				}
+			}
+		}
+	}
+
 	if redirectTo != "" {
 		log.Println("REDIRECT: ", redirectTo)
 		http.Redirect(w, r, redirectTo, 301)
@@ -360,7 +422,6 @@ func main() {
 	}
 
 	port := getenv("PORT", "8888")
-	doNotCache := getenv("USE_CACHE", "true") == "false"
 	lru := cache.NewLRUCache(CacheCapacity)
 
 	resp, err := http.Get("https://raw.github.com/progrium/viewdocs/master/docs/template.html")
@@ -381,28 +442,20 @@ func main() {
 		switch r.Method {
 		case "GET":
 			user, repo, ref, doc := parseRequest(r)
-			redirected := handleRedirects(w, r, user, repo, ref, doc)
+			config, _ := getRepositoryConfig(lru, user, repo, ref)
+			redirected := handleRedirects(w, r, config, user, repo, ref, doc)
 			if redirected {
 				return
 			}
 			log.Printf("Building docs for '%s/%s' (ref: %s)", user, repo, ref)
 			key := user + ":" + repo + ":" + doc + ":" + ref
-			value, ok := lru.Get(key)
-			var output string
-			if !ok || doNotCache {
-				output, err = fetchAndRenderDoc(user, repo, ref, doc)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
-					return
-				}
-				lru.Set(key, &CacheValue{output, time.Now().Unix()})
-				log.Println("CACHE MISS:", key, lru.StatsJSON())
-			} else {
-				output = value.(*CacheValue).Value
-				if time.Now().Unix()-value.(*CacheValue).CreatedAt > CacheTTL {
-					lru.Delete(key)
-				}
+			output, err := cacheKey(lru, key, func() (string, error) {
+				return fetchAndRenderDoc(user, repo, ref, doc)
+			})
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
 			}
 			w.Write([]byte(output))
 		default:
