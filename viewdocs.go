@@ -345,7 +345,22 @@ func cacheKey(lruCache *cache.LRUCache, key string, fn callable) (string, error)
 	return output, nil
 }
 
-func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo string, ref string, doc string) bool {
+func getRepositoryConfig(lruCache *cache.LRUCache, user string, repo string, ref string) (map[string]interface{}, error) {
+	var dat map[string]interface{}
+	key := user + ":" + repo + ":viewdocs.json:" + ref
+	output, err := cacheKey(lruCache, key, func() (string, error) {
+		return fetchDoc(user, repo, ref, "docs/viewdocs.json")
+	})
+	if err != nil {
+		return dat, err
+	}
+	if err := json.Unmarshal([]byte(output), &dat); err != nil {
+		return dat, err
+	}
+	return dat, nil
+}
+
+func handleRedirects(w http.ResponseWriter, r *http.Request, config map[string]interface{}, user string, repo string, ref string, doc string) bool {
 	redirectTo := ""
 	if r.RequestURI == "/" {
 		redirectTo = "http://progrium.viewdocs.io/viewdocs/"
@@ -373,6 +388,25 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, user string, repo s
 			break
 		}
 	}
+
+	repoPrefix := repo
+	if ref != "master" {
+		repoPrefix = repo + "~" + ref
+	}
+
+	if redirectTo == "" {
+		if redirects, ok := config["redirects"]; ok {
+			redirectsMap, _ := redirects.(map[string]interface{})
+			redirect, ok := redirectsMap[doc]
+			if ok {
+				redirectTo = redirect.(string)
+				if !strings.HasPrefix(redirectTo, "http://") && !strings.HasPrefix(redirectTo, "https://") {
+					redirectTo = "/" + repoPrefix + "/" + strings.TrimSuffix(redirectTo, "/") + "/"
+				}
+			}
+		}
+	}
+
 	if redirectTo != "" {
 		log.Println("REDIRECT: ", redirectTo)
 		http.Redirect(w, r, redirectTo, 301)
@@ -407,7 +441,8 @@ func main() {
 		switch r.Method {
 		case "GET":
 			user, repo, ref, doc := parseRequest(r)
-			redirected := handleRedirects(w, r, user, repo, ref, doc)
+			config, _ := getRepositoryConfig(lru, user, repo, ref)
+			redirected := handleRedirects(w, r, config, user, repo, ref, doc)
 			if redirected {
 				return
 			}
