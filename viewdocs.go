@@ -207,6 +207,9 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 func cleanupDocLinks(bodyStr string, err error) (string, error) {
 	if err == nil {
 		bodyStr = strings.Replace(bodyStr, "](docs/", "](", -1)
+		bodyStr = strings.Replace(bodyStr, "](/docs/", "](", -1)
+		bodyStr = strings.Replace(bodyStr, ".md)", "/)", -1)
+		bodyStr = strings.Replace(bodyStr, ".md#", "/#", -1)
 	}
 	return bodyStr, err
 }
