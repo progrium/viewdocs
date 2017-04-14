@@ -1,0 +1,13 @@
+hash: f69a260a8820da96873364c88cfe7dbd12e24a47b805799c9995803ddb2b430a
+updated: 2017-04-13T22:27:53.97617644-06:00
+imports:
+- name: github.com/youtube/vitess
+  version: ba320fc845939f7a0fc1381f92d0455b3add7f43
+  subpackages:
+  - go/cache
+- name: golang.org/x/net
+  version: 5602c733f70afc6dcec6766be0d5034d4c4f14de
+  subpackages:
+  - html
+  - html/atom
+testImports: []

@@ -1,2 +1,4 @@
 viewdocs
 .env
+vendor/*
+!vendor/vendor.json
