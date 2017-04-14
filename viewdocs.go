@@ -170,7 +170,7 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 		pathPrefix := pathPrefix()
 		bodyStr, err := readFile(pathPrefix + doc)
 		if err == nil {
-			return bodyStr, err
+			return cleanupDocLinks(bodyStr, err)
 		}
 	}
 	log.Println("FETCH: https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
