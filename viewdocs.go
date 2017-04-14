@@ -168,10 +168,7 @@ func fetchURL(channel chan string, url string) bool {
 func fetchDoc(user, repo, ref, doc string) (string, error) {
 	if getenv("DEBUG", "0") == "1" {
 		pathPrefix := pathPrefix()
-		bodyStr, err := readFile(pathPrefix + doc)
-		if err == nil {
-			return cleanupDocLinks(bodyStr, err)
-		}
+		return readFile(pathPrefix + doc)
 	}
 	log.Println("FETCH: https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
 	resp, err := http.Get("https://raw.github.com/" + user + "/" + repo + "/" + ref + "/" + doc)
@@ -193,11 +190,12 @@ func fetchDoc(user, repo, ref, doc string) (string, error) {
 			if doc == "docs/index.md" {
 				for ext := range markdownExtensions() {
 					bodyStr, err := fetchDoc(user, repo, ref, "README"+ext)
-					return cleanupDocLinks(bodyStr, err)
+					if err != nil {
+						return bodyStr, err
+					}
 				}
 			}
-			bodyStr, err := fetchDoc(user, repo, ref, newDoc)
-			return cleanupDocLinks(bodyStr, err)
+			return fetchDoc(user, repo, ref, newDoc)
 		}
 		body = []byte("# Page not found")
 	}
@@ -247,6 +245,7 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 		return bodyStr, nil
 	}
 
+	bodyStr, err = cleanupDocLinks(bodyStr, err)
 	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
 	if err != nil {
 		return "", err
