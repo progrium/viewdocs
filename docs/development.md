@@ -18,7 +18,7 @@ mkdir -p $GOPATH/src/github.com/progrium
 cd $GOPATH/src/github.com/progrium
 git clone https://github.com/progrium/viewdocs.git
 cd viewdocs
-go get
+glide install
 go run viewdocs.go
 ```
 
