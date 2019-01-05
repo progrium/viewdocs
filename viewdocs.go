@@ -372,7 +372,7 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, config map[string]i
 		redirectTo = "http://dokku.viewdocs.io" + r.RequestURI
 	}
 	if isAsset(doc) && !strings.Contains(r.Header.Get("Cache-Control"), "no-store") {
-		redirectTo = "https://cdn.rawgit.com/" + user + "/" + repo + "/" + ref + "/docs/" + doc
+		redirectTo = "https://cdn.jsdelivr.net/gh/" + user + "/" + repo + "@" + ref + "/docs/" + doc
 	}
 	if !strings.HasSuffix(r.RequestURI, "/") {
 		for ext := range markdownExtensions() {
