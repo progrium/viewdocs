@@ -301,11 +301,8 @@ func isAsset(name string) bool {
 		".gif":      true,
 	}
 
-	if ok, _ := assetExts[path.Ext(name)]; ok {
-		return true
-	}
-
-	return false
+	_, ok := assetExts[path.Ext(name)]
+	return ok
 }
 
 func readFile(path string) (string, error) {
