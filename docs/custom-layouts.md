@@ -1,14 +1,17 @@
 # Custom Layouts
 
-Viewdocs.io requires a layout template in order to render your markdown pages.  The layout file, template.html, must be located at the root of your docs directory.  A default layout is included - and was used to render the page you are currently reading.  Developing a custom layout is simple, as long as certain constraints are accomodated.  
+Viewdocs.io requires a layout template in order to render your markdown pages.  The layout file, template.html, must be located at the root of your docs directory.  A default layout is included - and was used to render the page you are currently reading.  Developing a custom layout is simple, as long as certain constraints are accomodated.
 
 ## Template Tags
 
-Template tags are case sensitive upper case identifiers.  There are currently three tags:
+Template tags are case sensitive upper case identifiers.  The following tags are supported:
 
 1. {{USER}} - the Github user name of the repository
 2. {{NAME}} - the name of the repository
 3. {{CONTENT}} - the contents of the markdown document when rendered
+4. {{PAGE_CLASS}} - a css class representation of the current url
+5. {{REF}} - the current repository reference, usually master
+5. {{DOC}} - the name of the markdown file being viewed.
 
 Here's a sample Bootstrap & Angularjs based template:
 
@@ -23,7 +26,7 @@ Here's a sample Bootstrap & Angularjs based template:
         <div ng-controller="NavbarCtrl">
             <navbar heading="Repo Human Name" name={{NAME}} user={{USER}} />
         </div>
-        <div class="container"> 
+        <div class="container">
             <div class="col-md-12 main-content">
                 <section id="global">
                   <div class="section">
@@ -37,7 +40,7 @@ Here's a sample Bootstrap & Angularjs based template:
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-route.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.js"></script>
-        <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/app.js"></script>    
+        <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/app.js"></script>
     </body>
     </html>
 
@@ -47,14 +50,14 @@ The viewdocs.io server only serves markdown files.  Static files such as javascr
 
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-route.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.js"></script>
-  
+
 Ideally, you'll want to serve assets from your Github repository. Github has instituted anti-hotlinking provision on their `raw.github.com` domain.  However, if you enable Github Pages for your repo Github will serve your files from their github.io domain.
 
-A principal motivation for the development of viewdocs.io was to avoid having to maintain a separate gh-pages branch in order to serve a library documentation site.  It may seem contradictory to maintain a gh-pages branch to serve assets for a viewdocs.io site.  The following setup makes serving static assets from Github Pages painless. 
+A principal motivation for the development of viewdocs.io was to avoid having to maintain a separate gh-pages branch in order to serve a library documentation site.  It may seem contradictory to maintain a gh-pages branch to serve assets for a viewdocs.io site.  The following setup makes serving static assets from Github Pages painless.
 
 ### Painless Github Pages Setup
 
-OK - it's a simple one-time setup, with all work local to your repository.  Don't follow 
+OK - it's a simple one-time setup, with all work local to your repository.  Don't follow
 any other `gh-pages` tutorials, as we're not publishing a site, just serving our static
 assets from our `/docs` directory.  (Repeat steps 2 & 3 on each workspace - i.e. If you work on your project at home & at work, repeat steps 2 & 3 each location.)
 
@@ -73,9 +76,9 @@ a new clone.  Create a `gh-pages` branch that is identical to your `master` bran
    make it executable
 
         chmod u+x .git/hooks/post-commit
-        
+
    This `post-commit` hook automatically forces the gh-pages branch to mirror the master branch.
-    
+
 3. Edit your `.git/config` file so that the `[remote "origin"]` section looks like this:
 
         [remote "origin"]
@@ -89,17 +92,17 @@ a new clone.  Create a `gh-pages` branch that is identical to your `master` bran
 4. Tell Github that you are not using Jekyll
 
         touch .nojekyll
-    
+
 5. Check in your changes and push to origin, adding the gh-pages branch to Github:
 
         git add -A .
-        git commit -m "now serving assets from github.io"    
+        git commit -m "now serving assets from github.io"
         git push origin
 
    Wait ten minutes for Github to notice your new gh-pages branch and start serving your files.  Now, in your templates you can reference:
-    
+
         http://{{USER}}.github.io/{{NAME}}/docs/assets/css/demo.css
-    
+
    assuming you created a file `demo.css` and put it at `assets/css` relative to your docs folder.  Note that you may experience up to a 10 minute delay before change pushed to Github are reflected at the github.io domain.
 
 
@@ -124,25 +127,25 @@ HTML partials for Angularjs templates can be embedded in your template.html, for
                   </button>
                   <a class="navbar-brand" href="/{{NAME}}">{{heading}}</a>
               </div>
-                           
+
               <div class="collapse navbar-collapse navbar-ex5-collapse" id="navbar-main">
                   <ul class="nav navbar-nav">
                       <li ng-repeat="item in items" ng-class="{active: item.selected}">
                           <a href="/{{NAME}}/{{item.link}}">{{item.title}}</a>
                       </li>
                   </ul>
-                                          
+
                   <ul class="nav navbar-nav navbar-right">
                       <li ng-class="{active: item.selected}">
                           <a href="http://github.com/{{USER}}/{{NAME}}">On Github</a>
                       </li>
                   </ul>
-                  
+
               </div>
           </div>
-    </div> 
+    </div>
     </script>
-    
+
 can be referenced in javascript as if it were remote:
 
     directive('navbar', ['$location', '$http',  function ($location, $http) {
@@ -155,7 +158,7 @@ can be referenced in javascript as if it were remote:
             replace: true,
             ...
 
-### JSON 
+### JSON
 
 JSON can be embedded in a markdown file and then parsed out of the rendered page.  Given the following markdown content in a file nav.md:
 
@@ -169,8 +172,8 @@ JSON can be embedded in a markdown file and then parsed out of the rendered page
             {"title": "Annotated Code", "link": "annotated"}
         ]
     </div>
-    
-    
+
+
 The following example javascript function will request and extract it.
 
     var itemsXpath = '//*[@id="global"]/div/div';
@@ -184,8 +187,8 @@ The following example javascript function will request and extract it.
     });
 
 
-Note: 
- - The Github Markdown API strips id and class attributes from html tags. 
- - Not all browsers' DOMParser implementations support 'text/html' format.  A shim can be found here: https://gist.github.com/1129031 
+Note:
+ - The Github Markdown API strips id and class attributes from html tags.
+ - Not all browsers' DOMParser implementations support 'text/html' format.  A shim can be found here: https://gist.github.com/1129031
 
 
