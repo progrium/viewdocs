@@ -15,34 +15,36 @@ Template tags are case sensitive upper case identifiers.  The following tags are
 
 Here's a sample Bootstrap & Angularjs based template:
 
-    <!doctype html>
-    <html lang="en" ng-app="myApp">
-    <head>
-        <meta charset="utf-8">
-        <title>{{NAME}} :: viewdocs.io</title>
-        <link href="http://{{USER}}.github.io/{{NAME}}/docs/assets/bootstrap/bootstrap.min.css" rel="stylesheet" media="screen">
-    </head>
-    <body>
-        <div ng-controller="NavbarCtrl">
-            <navbar heading="Repo Human Name" name={{NAME}} user={{USER}} />
+```html
+<!doctype html>
+<html lang="en" ng-app="myApp">
+<head>
+    <meta charset="utf-8">
+    <title>{{NAME}} :: viewdocs.io</title>
+    <link href="http://{{USER}}.github.io/{{NAME}}/docs/assets/bootstrap/bootstrap.min.css" rel="stylesheet" media="screen">
+</head>
+<body>
+    <div ng-controller="NavbarCtrl">
+        <navbar heading="Repo Human Name" name={{NAME}} user={{USER}} />
+    </div>
+    <div class="container">
+        <div class="col-md-12 main-content">
+            <section id="global">
+              <div class="section">
+                  {{CONTENT}}
+              </div>
+            </section>
         </div>
-        <div class="container">
-            <div class="col-md-12 main-content">
-                <section id="global">
-                  <div class="section">
-                      {{CONTENT}}
-                  </div>
-                </section>
-            </div>
-        </div>
-        <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/jquery-1.10.1.min.js"></script>
-        <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/bootstrap.min.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-route.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.js"></script>
-        <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/app.js"></script>
-    </body>
-    </html>
+    </div>
+    <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/jquery-1.10.1.min.js"></script>
+    <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.0/angular-route.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.7.0/ui-bootstrap-tpls.js"></script>
+    <script src="http://{{USER}}.github.io/{{NAME}}/docs/assets/js/app.js"></script>
+</body>
+</html>
+```
 
 ## Static Assets
 
