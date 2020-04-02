@@ -246,10 +246,15 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	}
 
 	bodyStr, err = cleanupDocLinks(bodyStr, err)
-	resp, err := http.Post("https://api.github.com/markdown/raw?access_token="+os.Getenv("ACCESS_TOKEN"), "text/x-markdown", strings.NewReader(bodyStr))
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", "https://api.github.com/markdown/raw", strings.NewReader(bodyStr))
+	req.Header.Add("Content-Type", "text/x-markdown")
+	req.Header.Add("Authorization", "token "+getenv("ACCESS_TOKEN", ""))
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
