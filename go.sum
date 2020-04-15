@@ -2,3 +2,6 @@ github.com/youtube/vitess v0.0.0-20151013041645-ba320fc84593 h1:348rkfeq19xFtNMj
 github.com/youtube/vitess v0.0.0-20151013041645-ba320fc84593/go.mod h1:hpMim5/30F1r+0P8GGtB29d0gWHr0IZ5unS+CG0zMx8=
 golang.org/x/net v0.0.0-20151008145043-b846920a172a h1:r4AyojsGB9Y0Xyl2XZ86iJcY3rj1eATk765OjLub6SQ=
 golang.org/x/net v0.0.0-20151008145043-b846920a172a/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
+gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
