@@ -46,7 +46,7 @@ func (cv *CacheValue) Size() int {
 type callable func() (string, error)
 
 type frontmatter struct {
-	TemplateName string
+	TemplateName string `yaml:"TemplateName"`
 }
 
 func getenv(key string, defaultValue string) string {
@@ -86,7 +86,7 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 }
 
 func parseFrontmatter(s string, v interface{}) (string, error) {
-	delim := "---"
+	delim := "---\n"
 	if !strings.HasPrefix(s, delim) {
 		return s, nil
 	}
