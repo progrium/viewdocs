@@ -14,6 +14,7 @@ import (
 
 	"github.com/youtube/vitess/go/cache"
 	"golang.org/x/net/html"
+	"gopkg.in/yaml.v2"
 )
 
 // CacheCapacity is an integer of memory in megabytes
@@ -43,6 +44,10 @@ func (cv *CacheValue) Size() int {
 }
 
 type callable func() (string, error)
+
+type frontmatter struct {
+	TemplateName string `yaml:"TemplateName"`
+}
 
 func getenv(key string, defaultValue string) string {
 	value := os.Getenv(key)
@@ -78,6 +83,24 @@ func parseRequest(r *http.Request) (user, repo, ref, doc string) {
 		}
 	}
 	return
+}
+
+func parseFrontmatter(s string, v interface{}) (string, error) {
+	delim := "---\n"
+	if !strings.HasPrefix(s, delim) {
+		return s, nil
+	}
+
+	parts := strings.SplitN(s, delim, 3)
+	if len(parts) != 3 {
+		return s, nil
+	}
+
+	content := parts[2]
+	if err := yaml.Unmarshal([]byte(parts[1]), v); err != nil {
+		return s, err
+	}
+	return string(content), nil
 }
 
 func fixRelativeLinks(user, repo, doc, ref, body string) (string, error) {
@@ -213,21 +236,6 @@ func cleanupDocLinks(bodyStr string, err error) (string, error) {
 }
 
 func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
-	template := make(chan string)
-	templateName := "template"
-	templateRecv := false
-	defer func() {
-		if !templateRecv {
-			<-template
-		}
-	}()
-
-	if doc == "index.md" {
-		templateName = "home"
-	}
-
-	go fetchTemplate(template, user, repo, ref, templateName)
-
 	if !isAsset(doc) {
 		// https://github.com/github/markup/blob/master/lib/github/markups.rb#L1
 		mdExts := markdownExtensions()
@@ -240,6 +248,26 @@ func fetchAndRenderDoc(user, repo, ref, doc string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	var f frontmatter
+	bodyStr, err = parseFrontmatter(bodyStr, &f)
+	if err != nil || f.TemplateName == "" {
+		f.TemplateName = "template"
+		if doc == "index.md" {
+			f.TemplateName = "home"
+		}
+	}
+
+	template := make(chan string)
+	templateName := f.TemplateName
+	templateRecv := false
+	defer func() {
+		if !templateRecv {
+			<-template
+		}
+	}()
+
+	go fetchTemplate(template, user, repo, ref, templateName)
 
 	if isAsset(doc) {
 		return bodyStr, nil
