@@ -398,8 +398,13 @@ func handleRedirects(w http.ResponseWriter, r *http.Request, config map[string]i
 	if r.RequestURI == "/" {
 		redirectTo = "http://progrium.viewdocs.io/viewdocs/"
 	}
-	if strings.Contains(r.Host, "progrium") && strings.HasPrefix(r.RequestURI, "/dokku") {
-		redirectTo = "http://dokku.viewdocs.io" + r.RequestURI
+	if strings.Contains(r.Host, "progrium") || strings.Contains(r.Host, "dokku") {
+		if r.RequestURI == "/dokku" || r.RequestURI == "/dokku/" {
+			redirectTo = "https://dokku.com"
+		}
+		if strings.HasPrefix(r.RequestURI, "/dokku") {
+			redirectTo = "https://dokku.com" + "/docs" + strings.TrimPrefix(r.RequestURI, "/dokku")
+		}
 	}
 	if isAsset(doc) && !strings.Contains(r.Header.Get("Cache-Control"), "no-store") {
 		redirectTo = "https://cdn.jsdelivr.net/gh/" + user + "/" + repo + "@" + ref + "/docs/" + doc
